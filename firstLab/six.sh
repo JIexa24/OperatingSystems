@@ -21,5 +21,8 @@ fi
 
 if [[ $RUN == 1 ]]
 then
+if [[ $COMPILE == 1 ]]
+then
 ./a.out
+fi
 fi
