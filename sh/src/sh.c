@@ -40,6 +40,8 @@ struct pipecmd {
 int fork1(void);  // Fork but exits on failure.
 struct cmd *parsecmd(char*);
 
+struct cmd*
+redircmd(struct cmd *subcmd, char *file, int type);
 // Execute cmd.  Never returns.
 void
 runcmd(struct cmd *cmd)
@@ -63,7 +65,7 @@ runcmd(struct cmd *cmd)
             exit(0);
         //fprintf(stderr, "exec not implemented\n");
         // Your code here ...
-        if (execv(ecmd->argv[0], ecmd->argv) == -1) {
+        if (execvp(ecmd->argv[0], ecmd->argv) == -1) {
           fprintf(stderr, "File (%s) not found!\n", ecmd->argv[0]);
         }
         break;
@@ -82,11 +84,15 @@ runcmd(struct cmd *cmd)
         //fprintf(stderr, "pipe not implemented\n");
         // Your code here ...
         if(fork1() == 0) {
-          runcmd(pcmd->left);
+          runcmd(redircmd((struct cmd *)pcmd->left, "./buffer", (int)'>'));
         }
         int r;
         wait(&r);
-        runcmd(pcmd->right);
+        if(fork1() == 0) {
+          runcmd(redircmd((struct cmd *)pcmd->right, "./buffer", (int)'<'));
+        }
+        wait(&r);
+        while(remove("./buffer") != 0);
         break;
     }    
     exit(0);
