@@ -1,19 +1,35 @@
 CC = gcc
-CFLAGS = -g3 -O0 -std=c99 
+CFLAGS = -g3 -O0 
 
-all: CLIENT SERVER
+all: WRITE BC TERM CLIENT SERVER
 
-CLIENT : ./obj/client.o
-	$(CC) ./obj/client.o -o ./bin/client $(CFLAGS)
+CLIENT : ./obj/client.o ./obj/bc.o ./obj/term.o ./obj/write.o
+	$(CC) ./obj/client.o ./obj/bc.o ./obj/term.o ./obj/write.o -o ./bin/client $(CFLAGS)
 
 ./obj/client.o: ./src/client.c
-	$(CC) -c ./src/client.c -o ./obj/client.o -std=c99
+	$(CC) -c ./src/client.c -o ./obj/client.o
 
-SERVER: ./obj/server.o
-	$(CC) ./obj/server.o -o ./bin/server $(CFLAGS)
+SERVER: ./obj/server.o ./obj/bc.o ./obj/term.o ./obj/write.o
+	$(CC) ./obj/server.o ./obj/bc.o ./obj/term.o ./obj/write.o -o ./bin/server $(CFLAGS)
 
 ./obj/server.o: ./src/server.c
-	$(CC) -c ./src/server.c -o ./obj/server.o -std=c99
+	$(CC) -c ./src/server.c -o ./obj/server.o 
+
+BC: ./obj/bc.o
+
+./obj/bc.o: ./src/bc.c
+	$(CC) -c ./src/bc.c -o ./obj/bc.o
+
+TERM: ./obj/term.o
+
+./obj/term.o: ./src/term.c
+	$(CC) -c ./src/term.c -o ./obj/term.o
+
+WRITE: ./obj/write.o
+
+./obj/write.o: ./src/write.c
+	$(CC) -c ./src/write.c -o ./obj/write.o 
+
 
 clean:
 	rm ./obj/*.o
