@@ -17,8 +17,7 @@ int main(int argc, char** argv)
   int sockfd, numbytes;
   char buf[MAXDATASIZE];
   struct hostent *he;
-  struct sockaddr_in their_addr; // Адрес сервака
-	
+  struct sockaddr_in their_addr; // Адрес сервака	
   char hostn[400]; // Имя хоста текущее
 
   struct hostent *hostIP; // Айпишка хоста
@@ -30,7 +29,7 @@ int main(int argc, char** argv)
     printf("ERROR: - IP Address not found.");
   }
 
-  if (argc != 2) {
+  if (argc < 2) {
     fprintf(stderr,"usage: ./client hostname port\n");
     exit(EXIT_FAILURE);
   }
@@ -52,11 +51,23 @@ int main(int argc, char** argv)
   their_addr.sin_port = htons(port);
   their_addr.sin_addr = *((struct in_addr *)he->h_addr);
   memset(&(their_addr.sin_zero), 0, 8);
-
+  char sendbuf[MAXDATASIZE];
+  int i = 0;
   if (connect(sockfd, (struct sockaddr *)&their_addr, sizeof(struct sockaddr)) == -1) {
     perror("connect");
     exit(EXIT_FAILURE);
   }
+
+  do {
+  i = 0;
+  printf("Send msg: ");
+    do {
+      scanf("%c", &sendbuf[i]);
+    } while (sendbuf[i++] != '\n');
+  sendbuf[i - 1] = '\0';
+
+  if (send(sockfd, sendbuf, i - 1, 0) == -1)
+    perror("send");
 
   if ((numbytes=recv(sockfd, buf, MAXDATASIZE-1, 0)) == -1) {
     perror("recv");
@@ -64,13 +75,12 @@ int main(int argc, char** argv)
   }
   buf[numbytes] = 0;
 
-#if 1
   printf("\n\nLocalhost: %s\n", inet_ntoa(*(struct in_addr *)hostIP->h_addr));
   printf("Local Port: %d\n", port);
   printf("Remote Host: %s\n", inet_ntoa(their_addr.sin_addr));
-  printf("Received daytime data: %s\n",buf);
-#endif
+  printf("Received data: %s\n",buf);
 
+  } while (strcmp(buf,"Disconnected"));
   close(sockfd);
   return 0;
 }

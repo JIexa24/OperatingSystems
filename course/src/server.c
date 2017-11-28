@@ -13,6 +13,7 @@
 #include <signal.h>
 
 #define MYPORT 1025 
+#define MAXDATASIZE 500 // Буфер приема
 #define BACKLOG 10 //максимальная длина очереди
 void sigchld_handler(int s)
 {
@@ -22,14 +23,15 @@ int main(int argc, char** argv)
 {
   int port = argc > 1 ? atoi(argv[1]) : 7777; // прослушиваемый порт
   time_t timer;
-  int sockfd, new_fd; /* sock_fd - то, что слушаем
+  int sockfd, new_fd, numbytes; /* sock_fd - то, что слушаем
                            new_fd - для новых включений */
   struct sockaddr_in my_addr; // адрес хоста (сервера)
   struct sockaddr_in their_addr; // Адрес подключившегося
   socklen_t sin_size;
   struct sigaction sa;
   int yes=1;
-    
+  char buf[MAXDATASIZE];
+
   if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) == -1) {  
    perror("socket");
    exit(1);
@@ -39,7 +41,7 @@ int main(int argc, char** argv)
     perror("setsockopt");
     exit(1);
   }  
-	
+
   my_addr.sin_family = AF_INET;
   my_addr.sin_port = htons(port);
   my_addr.sin_addr.s_addr = INADDR_ANY;
@@ -61,20 +63,41 @@ int main(int argc, char** argv)
     perror("sigaction");
     exit(1);
   }
-
+  
+  int count = 0;
   while(1) {
     sin_size = sizeof(struct sockaddr_in);
     if ((new_fd = accept(sockfd, (struct sockaddr *)&their_addr,&sin_size)) == -1) {
       //perror("accept");
       continue;
     }
-    printf("Received request from Client: %s:%d\n",
-      inet_ntoa(their_addr.sin_addr),port);
+    count++;
+    printf("Received request from Client %d: %s:%d\n",
+      count,inet_ntoa(their_addr.sin_addr),port);
+
     if (!fork()) { // child process
       close(sockfd); // child doesn.t need the listener
       timer = time(NULL);
-      if (send(new_fd, ctime(&timer), 30, 0) == -1)
+
+      do {
+
+      if ((numbytes=recv(new_fd, buf, MAXDATASIZE-1, 0)) == -1) {
+        perror("recv");
+        exit(EXIT_FAILURE);
+      }
+      buf[numbytes] = 0;
+      printf("message: %s\n",buf);
+
+      if (!strcmp(buf, "disconnect")) {
+        if (send(new_fd, "Disconnected", 12, 0) == -1)
+          perror("send");
+          break;
+      }
+
+      if (send(new_fd, "I'm alive! Connect!\n", 20, 0) == -1)
         perror("send");
+      } while (1);
+
       close(new_fd);
       exit(0);
     }
