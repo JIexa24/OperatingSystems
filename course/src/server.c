@@ -23,14 +23,15 @@ int main(int argc, char** argv)
 {
   int port = argc > 1 ? atoi(argv[1]) : 7777; // прослушиваемый порт
   time_t timer;
-  int sockfd, new_fd, numbytes; /* sock_fd - то, что слушаем
+  int sockfd, new_fd[2], numbytes[2]; /* sock_fd - то, что слушаем
                            new_fd - для новых включений */
   struct sockaddr_in my_addr; // адрес хоста (сервера)
-  struct sockaddr_in their_addr; // Адрес подключившегося
+  struct sockaddr_in their_addr[2]; // Адрес подключившегося
   socklen_t sin_size;
   struct sigaction sa;
   int yes=1;
-  char buf[MAXDATASIZE];
+  char buf[2][MAXDATASIZE];
+
 
   if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) == -1) {  
    perror("socket");
@@ -67,41 +68,73 @@ int main(int argc, char** argv)
   int count = 0;
   while(1) {
     sin_size = sizeof(struct sockaddr_in);
-    if ((new_fd = accept(sockfd, (struct sockaddr *)&their_addr,&sin_size)) == -1) {
+    if ((new_fd[0] = accept(sockfd, (struct sockaddr *)&their_addr[0],&sin_size)) == -1) {
       //perror("accept");
       continue;
     }
     count++;
     printf("Received request from Client %d: %s:%d\n",
-      count,inet_ntoa(their_addr.sin_addr),port);
+      count,inet_ntoa(their_addr[0].sin_addr),port);
+
+    if ((new_fd[1] = accept(sockfd, (struct sockaddr *)&their_addr[1],&sin_size)) == -1) {
+      //perror("accept");
+      continue;
+    }
+    count++;
+    printf("Received request from Client %d: %s:%d\n",
+      count,inet_ntoa(their_addr[1].sin_addr),port);
 
     if (!fork()) { // child process
       close(sockfd); // child doesn.t need the listener
       timer = time(NULL);
+      srand(timer);
+      int id[2];
+      id[0] = rand() % 2;
+      if (id[0] == 0) id[1] = 1; // 0 - o; 1 - x
+      else id[1] = 0;            // 0 - x; 1 - o
+      int k = 0,j = 0;
+      //do {
 
-      do {
-
-      if ((numbytes=recv(new_fd, buf, MAXDATASIZE-1, 0)) == -1) {
+      for (k = 0,j = 0; j < 2; k^=1,j++) { 
+      if ((numbytes[k]=recv(new_fd[k], &buf[k], MAXDATASIZE-1, 0)) == -1) {
         perror("recv");
         exit(EXIT_FAILURE);
       }
-      buf[numbytes] = 0;
-      printf("message: %s\n",buf);
-
-      if (!strcmp(buf, "disconnect")) {
-        if (send(new_fd, "Disconnected", 12, 0) == -1)
+      buf[k][numbytes[k]] = 0;
+      printf("message %d: %s\n",k+1,buf[k]);
+      } 
+      
+      //for (k = 0,j = 0; j < 2; k^=1,j++) { 
+      //  if ((numbytes[k]=send(new_fd[k], "I'm alive! Connect!\n", 20, 0)) == -1) {
+      //    perror("send");
+      //  }
+      //}
+      k = id[0] == 1 ? id[0] : id[1]; 
+      for (k; k < 2; k^=1) {
+        if ((numbytes[k]=send(new_fd[k], "Go\n", 3, 0)) == -1) {
           perror("send");
-          break;
-      }
+        }
+        if ((numbytes[k]=recv(new_fd[k], buf[k], MAXDATASIZE-1, 0)) == -1) {
+          perror("recv");
+          exit(EXIT_FAILURE);
+        }
+        buf[k][numbytes[k]] = 0;
+        printf("Received msg from %d: %s\n",k + 1, buf[k]);
+        if (!strcmp(buf[k], "disconnect")) {
+          if (send(new_fd[k], "Disconnected", 12, 0) == -1)
+            perror("send");
+            break;
+        }// else if (send(new_fd[k], "I'm alive! Connect!\n", 20, 0) == -1)
+         // perror("send");
+      } // for 
+      //} while (1);
 
-      if (send(new_fd, "I'm alive! Connect!\n", 20, 0) == -1)
-        perror("send");
-      } while (1);
-
-      close(new_fd);
+      close(new_fd[0]);
+      close(new_fd[1]);
       exit(0);
     }
-    close(new_fd); // parent doesn.t need this
+    close(new_fd[0]); // parent doesn.t need this
+    close(new_fd[1]); // parent doesn.t need this
   }
   return 0;
 }
