@@ -21,7 +21,9 @@ void sigchld_handler(int s)
 }
 int main(int argc, char** argv)
 {
-  int port = argc > 1 ? atoi(argv[1]) : 7777; // прослушиваемый порт
+  int port = 7777; // прослушиваемый порт
+  int games = 1;
+  int opt;
   time_t timer;
   int sockfd, new_fd[2], numbytes[2]; /* sock_fd - то, что слушаем
                            new_fd - для новых включений */
@@ -32,6 +34,21 @@ int main(int argc, char** argv)
   int yes=1;
   char buf[2][MAXDATASIZE];
 
+  opterr = 0;
+
+  while ((opt = getopt(argc, argv, "p:g:")) != -1) {
+    switch (opt) {
+      case 'p':
+        port = atoi(optarg);
+      break;
+      case 'g':
+        games = atoi(optarg);
+      break;
+
+    }
+  }
+  printf("port %d\n", port);
+  printf("games %d\n", games);
 
   if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) == -1) {  
    perror("socket");
@@ -66,7 +83,7 @@ int main(int argc, char** argv)
   }
   
   int count = 0;
-  while(1) {
+  while(games-- > 0) {
     sin_size = sizeof(struct sockaddr_in);
     if ((new_fd[0] = accept(sockfd, (struct sockaddr *)&their_addr[0],&sin_size)) == -1) {
       //perror("accept");
@@ -122,6 +139,8 @@ int main(int argc, char** argv)
         printf("Received msg from %d: %s\n",k + 1, buf[k]);
         if (!strcmp(buf[k], "disconnect")) {
           if (send(new_fd[k], "Disconnected", 12, 0) == -1)
+            perror("send");
+          if (send(new_fd[k^1], "Your Enemy Disconnected. Fail", 29, 0) == -1)
             perror("send");
             break;
         }// else if (send(new_fd[k], "I'm alive! Connect!\n", 20, 0) == -1)

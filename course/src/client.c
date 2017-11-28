@@ -18,10 +18,11 @@ int main(int argc, char** argv)
   char buf[MAXDATASIZE];
   struct hostent *he;
   struct sockaddr_in their_addr; // Адрес сервака	
-  char hostn[400]; // Имя хоста текущее
-
+  char hostn[400] = "127.0.0.1"; // Имя хоста текущее
+  int port = 7777; /* Порт. Л - Логика.*/
+  int opt;
   struct hostent *hostIP; // Айпишка хоста
-	
+
   // Попытка получить по имени хоста его айпишник
   if((gethostname(hostn, sizeof(hostn))) == 0) {
     hostIP = gethostbyname(hostn);
@@ -29,14 +30,22 @@ int main(int argc, char** argv)
     printf("ERROR: - IP Address not found.");
   }
 
-  if (argc < 2) {
-    fprintf(stderr,"usage: ./client hostname port\n");
-    exit(EXIT_FAILURE);
-  }
+  opterr = 0;
 
-  int port = argc > 2 ? atoi(argv[2]) : 7777; /* Порт. Л - Логика.*/
-	
-  if ((he=gethostbyname(argv[1])) == NULL) { //Ловим инфу о хосте
+  while ((opt = getopt(argc, argv, "p:h:")) != -1) {
+    switch (opt) {
+      case 'p':
+        port = atoi(optarg);
+      break;
+      case 'h':
+        strcpy(hostn, optarg);
+      break;
+    }
+  }
+  printf("port %d\n", port);
+  printf("host %s\n", hostn);
+
+  if ((he=gethostbyname(hostn)) == NULL) { //Ловим инфу о хосте
     perror("gethostbyname");
     exit(EXIT_FAILURE);
   }
@@ -80,7 +89,7 @@ int main(int argc, char** argv)
   printf("Remote Host: %s\n", inet_ntoa(their_addr.sin_addr));
   printf("Received data: %s\n",buf);
 
-  } while (strcmp(buf,"Disconnected"));
+  } while (strcmp(buf,"Disconnected") != 0 && strcmp(buf,"Your Enemy Disconnected. Fail") != 0);
   close(sockfd);
   return 0;
 }
