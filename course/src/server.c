@@ -83,7 +83,7 @@ int main(int argc, char** argv)
   }
   
   int count = 0;
-  while(games-- > 0) {
+  while(1) {
     sin_size = sizeof(struct sockaddr_in);
     if ((new_fd[0] = accept(sockfd, (struct sockaddr *)&their_addr[0],&sin_size)) == -1) {
       //perror("accept");
@@ -100,7 +100,7 @@ int main(int argc, char** argv)
     count++;
     printf("Received request from Client %d: %s:%d\n",
       count,inet_ntoa(their_addr[1].sin_addr),port);
-
+    if (games-- > 0)
     if (!fork()) { // child process
       close(sockfd); // child doesn.t need the listener
       timer = time(NULL);
