@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -g3 -O0 
+CFLAGS = -g3 -O0 -pthread
 
 all: WRITE BC TERM CLIENT SERVER
 
@@ -13,7 +13,7 @@ SERVER: ./obj/server.o ./obj/bc.o ./obj/term.o ./obj/write.o
 	$(CC) ./obj/server.o ./obj/bc.o ./obj/term.o ./obj/write.o -o ./bin/server $(CFLAGS)
 
 ./obj/server.o: ./src/server.c
-	$(CC) -c ./src/server.c -o ./obj/server.o 
+	$(CC) -c ./src/server.c -o ./obj/server.o
 
 BC: ./obj/bc.o
 
@@ -28,7 +28,7 @@ TERM: ./obj/term.o
 WRITE: ./obj/write.o
 
 ./obj/write.o: ./src/write.c
-	$(CC) -c ./src/write.c -o ./obj/write.o 
+	$(CC) -c ./src/write.c -o ./obj/write.o
 
 
 clean:

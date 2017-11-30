@@ -8,19 +8,24 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <time.h>
+#include <pthread.h>
 
 #include <sys/wait.h>
 #include <signal.h>
+#define MYPORT 1025
+#define MAXDATASIZE 500 // Буфер приема
+#define BACKLOG 10 //максимальная длина очереди
+
 char msghel[2][100] = {"You is a first gamer.\n","You is a second gamer.\n"};
 char dis[] = "Disconnected";
 char ydis[] = "Your Enemy Disconnected. Fail";
 int flag = 1;
-#define MYPORT 1025
-#define MAXDATASIZE 500 // Буфер приема
-#define BACKLOG 10 //максимальная длина очереди
+pthread_mutex_t mut = PTHREAD_MUTEX_INITIALIZER;
 void sigchld_handler(int s)
 {
+  pthread_mutex_lock(&mut);
   flag--;
+  pthread_mutex_unlock(&mut);
   while(wait(NULL) > 0);
 }
 int main(int argc, char** argv)
