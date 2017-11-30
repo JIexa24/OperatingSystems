@@ -9,9 +9,9 @@
 #include <arpa/inet.h>
 #include <time.h>
 #include <pthread.h>
-
 #include <sys/wait.h>
 #include <signal.h>
+#include "../include/screen.h"
 #define MYPORT 1025
 #define MAXDATASIZE 500 // Буфер приема
 #define BACKLOG 10 //максимальная длина очереди
