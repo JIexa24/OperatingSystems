@@ -54,7 +54,6 @@ int main(int argc, char** argv)
       case 'g':
         games = atoi(optarg);
       break;
-
     }
   }
   printf("port %d\n", port);

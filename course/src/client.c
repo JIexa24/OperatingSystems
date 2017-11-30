@@ -96,6 +96,7 @@ int main(int argc, char** argv)
     printf("Remote Host: %s\n", inet_ntoa(their_addr.sin_addr));
     printf("Received data: %s\n",buf);
     if (strcmp(buf,"Disconnected") == 0 || strcmp(buf,"Your Enemy Disconnected. Fail") == 0) {
+      mt_clrscr();
       break;
     } else {
       for (e = 8,b = numbytes - 1; e >= 0; e--, b--) {

@@ -25,7 +25,7 @@
 
 static int symX[2] = {405029505,2168595480};
 static int symO[2] = {2172748158,2122416513};
-static int symA[2] = {4294967295,4294967295};
+static int symA[2] = {0,0};
 
 void printField(char* field, int XY)
 {
