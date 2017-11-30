@@ -10,20 +10,21 @@
 #include <sys/socket.h>
 #include <assert.h>
 
-#define MAXDATASIZE 500 // Áóôåð ïðèåìà
+#define MAXDATASIZE 500 // Ð‘ÑƒÑ„ÐµÑ€ Ð¿Ñ€Ð¸ÐµÐ¼Ð°
 
 int main(int argc, char** argv)
 {
+  char field[10] = "         ";
   int sockfd, numbytes;
   char buf[MAXDATASIZE];
   struct hostent *he;
-  struct sockaddr_in their_addr; // Àäðåñ ñåðâàêà	
-  char hostn[400] = "127.0.0.1"; // Èìÿ õîñòà òåêóùåå
-  int port = 7777; /* Ïîðò. Ë - Ëîãèêà.*/
-  int opt;
-  struct hostent *hostIP; // Àéïèøêà õîñòà
+  struct sockaddr_in their_addr; // ÐÐ´Ñ€ÐµÑ ÑÐµÑ€Ð²Ð°ÐºÐ°
+  char hostn[400] = "127.0.0.1"; // Ð˜Ð¼Ñ Ñ…Ð¾ÑÑ‚Ð° Ñ‚ÐµÐºÑƒÑ‰ÐµÐµ
+  int port = 7777; /* ÐŸÐ¾Ñ€Ñ‚. Ð› - Ð›Ð¾Ð³Ð¸ÐºÐ°.*/
+  int opt, XY, k = 0;
+  struct hostent *hostIP; // ÐÐ¹Ð¿Ð¸ÑˆÐºÐ° Ñ…Ð¾ÑÑ‚Ð°
 
-  // Ïîïûòêà ïîëó÷èòü ïî èìåíè õîñòà åãî àéïèøíèê
+  // ÐŸÐ¾Ð¿Ñ‹Ñ‚ÐºÐ° Ð¿Ð¾Ð»ÑƒÑ‡Ð¸Ñ‚ÑŒ Ð¿Ð¾ Ð¸Ð¼ÐµÐ½Ð¸ Ñ…Ð¾ÑÑ‚Ð° ÐµÐ³Ð¾ Ð°Ð¹Ð¿Ð¸ÑˆÐ½Ð¸Ðº
   if((gethostname(hostn, sizeof(hostn))) == 0) {
     hostIP = gethostbyname(hostn);
   } else {
@@ -45,51 +46,81 @@ int main(int argc, char** argv)
   printf("port %d\n", port);
   printf("host %s\n", hostn);
 
-  if ((he=gethostbyname(hostn)) == NULL) { //Ëîâèì èíôó î õîñòå
+  if ((he=gethostbyname(hostn)) == NULL) { //Ð›Ð¾Ð²Ð¸Ð¼ Ð¸Ð½Ñ„Ñƒ Ð¾ Ñ…Ð¾ÑÑ‚Ðµ
     perror("gethostbyname");
     exit(EXIT_FAILURE);
   }
-	
+
   if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
     perror("socket");
     exit(1);
   }
-  
-  //Ñòàâèì èíóôó î ñåðâàêå
+
+  //Ð¡Ñ‚Ð°Ð²Ð¸Ð¼ Ð¸Ð½ÑƒÑ„Ñƒ Ð¾ ÑÐµÑ€Ð²Ð°ÐºÐµ
   their_addr.sin_family = AF_INET;
   their_addr.sin_port = htons(port);
   their_addr.sin_addr = *((struct in_addr *)he->h_addr);
   memset(&(their_addr.sin_zero), 0, 8);
   char sendbuf[MAXDATASIZE];
-  int i = 0;
+  int i = 0,e,b;
   if (connect(sockfd, (struct sockaddr *)&their_addr, sizeof(struct sockaddr)) == -1) {
     perror("connect");
     exit(EXIT_FAILURE);
   }
-
-  do {
-  i = 0;
-  printf("Send msg: ");
-    do {
-      scanf("%c", &sendbuf[i]);
-    } while (sendbuf[i++] != '\n');
-  sendbuf[i - 1] = '\0';
-
-  if (send(sockfd, sendbuf, i - 1, 0) == -1)
-    perror("send");
-
-  if ((numbytes=recv(sockfd, buf, MAXDATASIZE-1, 0)) == -1) {
-    perror("recv");
-    exit(EXIT_FAILURE);
+  for (i = 0; i < 2; i++) {
+    if ((numbytes=recv(sockfd, buf, MAXDATASIZE-1, 0)) == -1) {
+      perror("recv");
+      exit(EXIT_FAILURE);
+    }
+    buf[numbytes] = 0;
+    printf("From server: %s\n", buf);
+    if (i == 1) {
+      if (buf[numbytes - 1] == 'X'){
+        XY = 1;
+      } else XY = 0;
+    }
   }
-  buf[numbytes] = 0;
+  printf("I have %s\n", XY == 1 ? "X" : "O");
 
-  printf("\n\nLocalhost: %s\n", inet_ntoa(*(struct in_addr *)hostIP->h_addr));
-  printf("Local Port: %d\n", port);
-  printf("Remote Host: %s\n", inet_ntoa(their_addr.sin_addr));
-  printf("Received data: %s\n",buf);
+  for (k = XY; k < 2; k ^= 1) {
 
-  } while (strcmp(buf,"Disconnected") != 0 && strcmp(buf,"Your Enemy Disconnected. Fail") != 0);
+    if ((numbytes=recv(sockfd, buf, MAXDATASIZE-1, 0)) == -1) {
+      perror("recv");
+      exit(EXIT_FAILURE);
+    }
+    buf[numbytes] = 0;
+
+    printf("\n\nLocalhost: %s\n", inet_ntoa(*(struct in_addr *)hostIP->h_addr));
+    printf("Local Port: %d\n", port);
+    printf("Remote Host: %s\n", inet_ntoa(their_addr.sin_addr));
+    printf("Received data: %s\n",buf);
+    if (strcmp(buf,"Disconnected") == 0 || strcmp(buf,"Your Enemy Disconnected. Fail") == 0) {
+      break;
+    } else {
+      for (e = 8,b = numbytes - 1; e >= 0; e--, b--) {
+        field[e] = buf[b];
+      }
+      printf("Field:\n");
+      for (e = 0; e < 9; e++) {
+        if (e % 3 == 0) {
+          printf("\n");
+        }
+        printf("%c", field[e]);
+      }
+      printf("\n");
+    }
+    if (k == 1) {
+      i = 0;
+      printf("Send msg: ");
+      do {
+        scanf("%c", &sendbuf[i]);
+      } while (sendbuf[i++] != '\n');
+      sendbuf[i - 1] = '\0';
+
+      if (send(sockfd, sendbuf, i - 1, 0) == -1)
+        perror("send");
+  }
+  }//for
   close(sockfd);
   return 0;
 }

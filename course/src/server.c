@@ -11,28 +11,33 @@
 
 #include <sys/wait.h>
 #include <signal.h>
-
-#define MYPORT 1025 
-#define MAXDATASIZE 500 // Áóôåð ïðèåìà
-#define BACKLOG 10 //ìàêñèìàëüíàÿ äëèíà î÷åðåäè
+char msghel[2][100] = {"You is a first gamer.\n","You is a second gamer.\n"};
+char dis[] = "Disconnected";
+char ydis[] = "Your Enemy Disconnected. Fail";
+int flag = 1;
+#define MYPORT 1025
+#define MAXDATASIZE 500 // Ð‘ÑƒÑ„ÐµÑ€ Ð¿Ñ€Ð¸ÐµÐ¼Ð°
+#define BACKLOG 10 //Ð¼Ð°ÐºÑÐ¸Ð¼Ð°Ð»ÑŒÐ½Ð°Ñ Ð´Ð»Ð¸Ð½Ð° Ð¾Ñ‡ÐµÑ€ÐµÐ´Ð¸
 void sigchld_handler(int s)
 {
+  flag--;
   while(wait(NULL) > 0);
 }
 int main(int argc, char** argv)
 {
-  int port = 7777; // ïðîñëóøèâàåìûé ïîðò
+  int port = 7777; // Ð¿Ñ€Ð¾ÑÐ»ÑƒÑˆÐ¸Ð²Ð°ÐµÐ¼Ñ‹Ð¹ Ð¿Ð¾Ñ€Ñ‚
   int games = 1;
   int opt;
   time_t timer;
-  int sockfd, new_fd[2], numbytes[2]; /* sock_fd - òî, ÷òî ñëóøàåì
-                           new_fd - äëÿ íîâûõ âêëþ÷åíèé */
-  struct sockaddr_in my_addr; // àäðåñ õîñòà (ñåðâåðà)
-  struct sockaddr_in their_addr[2]; // Àäðåñ ïîäêëþ÷èâøåãîñÿ
-  socklen_t sin_size;
+  int sockfd, new_fd[2], numbytes[2]; /* sock_fd - Ñ‚Ð¾, Ñ‡Ñ‚Ð¾ ÑÐ»ÑƒÑˆÐ°ÐµÐ¼
+                           new_fd - Ð´Ð»Ñ Ð½Ð¾Ð²Ñ‹Ñ… Ð²ÐºÐ»ÑŽÑ‡ÐµÐ½Ð¸Ð¹ */
+  struct sockaddr_in my_addr; // Ð°Ð´Ñ€ÐµÑ Ñ…Ð¾ÑÑ‚Ð° (ÑÐµÑ€Ð²ÐµÑ€Ð°)
+  struct sockaddr_in their_addr[2]; // ÐÐ´Ñ€ÐµÑ Ð¿Ð¾Ð´ÐºÐ»ÑŽÑ‡Ð¸Ð²ÑˆÐµÐ³Ð¾ÑÑ
+  socklen_t sin_size[2];
   struct sigaction sa;
   int yes=1;
   char buf[2][MAXDATASIZE];
+  int k = 0,j = 0;
 
   opterr = 0;
 
@@ -49,8 +54,8 @@ int main(int argc, char** argv)
   }
   printf("port %d\n", port);
   printf("games %d\n", games);
-
-  if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) == -1) {  
+  flag = games;
+  if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
    perror("socket");
    exit(1);
   }
@@ -58,7 +63,7 @@ int main(int argc, char** argv)
   if (setsockopt(sockfd,SOL_SOCKET,SO_REUSEADDR,&yes,sizeof(int)) == -1) {
     perror("setsockopt");
     exit(1);
-  }  
+  }
 
   my_addr.sin_family = AF_INET;
   my_addr.sin_port = htons(port);
@@ -81,71 +86,95 @@ int main(int argc, char** argv)
     perror("sigaction");
     exit(1);
   }
-  
-  int count = 0;
-  while(1) {
-    sin_size = sizeof(struct sockaddr_in);
-    if ((new_fd[0] = accept(sockfd, (struct sockaddr *)&their_addr[0],&sin_size)) == -1) {
-      //perror("accept");
-      continue;
-    }
-    count++;
-    printf("Received request from Client %d: %s:%d\n",
-      count,inet_ntoa(their_addr[0].sin_addr),port);
 
-    if ((new_fd[1] = accept(sockfd, (struct sockaddr *)&their_addr[1],&sin_size)) == -1) {
-      //perror("accept");
-      continue;
+  int count = 0;
+  while(flag > 0) {
+    for (k = 0,j = 0; j < 2 && games > 0; k^=1,j++) {
+      sin_size[k] = sizeof(struct sockaddr_in);
+      if ((new_fd[k] = accept(sockfd, (struct sockaddr *)&their_addr[k],&sin_size[k])) == -1) {
+        //perror("accept");
+        continue;
+      }
+      count++;
+      printf("Received request from Client %d: %s:%d\n",
+             count,inet_ntoa(their_addr[k].sin_addr),port);
+      if ((send(new_fd[k], msghel[k], strlen(msghel[k]), 0)) == -1)
+        perror("send");
+
     }
-    count++;
-    printf("Received request from Client %d: %s:%d\n",
-      count,inet_ntoa(their_addr[1].sin_addr),port);
     if (games-- > 0)
     if (!fork()) { // child process
       close(sockfd); // child doesn.t need the listener
+      char field[10] = "aaaaaaaaa";
+      char tmp[100] = "You going ";
       timer = time(NULL);
       srand(timer);
       int id[2];
       id[0] = rand() % 2;
       if (id[0] == 0) id[1] = 1; // 0 - o; 1 - x
       else id[1] = 0;            // 0 - x; 1 - o
-      int k = 0,j = 0;
+      k = 0,j = 0;
       //do {
-
-      for (k = 0,j = 0; j < 2; k^=1,j++) { 
-      if ((numbytes[k]=recv(new_fd[k], &buf[k], MAXDATASIZE-1, 0)) == -1) {
-        perror("recv");
-        exit(EXIT_FAILURE);
+      for (k = 0,j = 0; j < 2; k^=1,j++) {
+        strcat(msghel[k], "Your Enemy has IP: ");
+        strcat(msghel[k], inet_ntoa(their_addr[k].sin_addr));
+        strcat(msghel[k], "\nTo game: 5 sec.");
+        strcat(msghel[k], "\nYour Symb: ");
+        strcat(msghel[k], id[k] == 1 ? "X" : "O");
+        if ((send(new_fd[k], msghel[k], strlen(msghel[k]), 0)) == -1)
+          perror("send");
       }
-      buf[k][numbytes[k]] = 0;
-      printf("message %d: %s\n",k+1,buf[k]);
-      } 
-      
-      //for (k = 0,j = 0; j < 2; k^=1,j++) { 
+      sleep(5);
+      //for (k = 0,j = 0; j < 2; k^=1,j++) {
       //  if ((numbytes[k]=send(new_fd[k], "I'm alive! Connect!\n", 20, 0)) == -1) {
       //    perror("send");
       //  }
       //}
-      k = id[0] == 1 ? id[0] : id[1]; 
+      int e = 0;
+      strcat(tmp, field);
+      k = id[0] == 1 ? 0 : 1;
       for (k; k < 2; k^=1) {
-        if ((numbytes[k]=send(new_fd[k], "Go\n", 3, 0)) == -1) {
-          perror("send");
+        for (e = 10; e < 19; e++){
+          tmp[e] = field[e - 10];
         }
+        if ((send(new_fd[k], tmp, 19, 0)) == -1)
+          perror("send");
+        if ((send(new_fd[k^1], field, 9, 0)) == -1)
+          perror("send");
+
         if ((numbytes[k]=recv(new_fd[k], buf[k], MAXDATASIZE-1, 0)) == -1) {
           perror("recv");
           exit(EXIT_FAILURE);
         }
         buf[k][numbytes[k]] = 0;
         printf("Received msg from %d: %s\n",k + 1, buf[k]);
-        if (!strcmp(buf[k], "disconnect")) {
-          if (send(new_fd[k], "Disconnected", 12, 0) == -1)
+        if (strcmp(buf[k], "disconnect") == 0) {
+          if (send(new_fd[k], dis, strlen(dis), 0) == -1)
             perror("send");
-          if (send(new_fd[k^1], "Your Enemy Disconnected. Fail", 29, 0) == -1)
+          if (send(new_fd[k^1], ydis, strlen(ydis), 0) == -1)
             perror("send");
             break;
-        }// else if (send(new_fd[k], "I'm alive! Connect!\n", 20, 0) == -1)
+        } else if (buf[k][numbytes[k] - 1] - '0' == 1 && field[0] == 'a') {
+          field[0] = id[k] == 1 ? 'X' : 'O';
+        } else if (buf[k][numbytes[k] - 1] - '0' == 2 && field[1] == 'a') {
+          field[1] = id[k] == 1 ? 'X' : 'O';
+        } else if (buf[k][numbytes[k] - 1] - '0' == 3 && field[2] == 'a') {
+          field[2] = id[k] == 1 ? 'X' : 'O';
+        } else if (buf[k][numbytes[k] - 1] - '0' == 4 && field[3] == 'a') {
+          field[3] = id[k] == 1 ? 'X' : 'O';
+        } else if (buf[k][numbytes[k] - 1] - '0' == 5 && field[4] == 'a') {
+          field[4] = id[k] == 1 ? 'X' : 'O';
+        } else if (buf[k][numbytes[k] - 1] - '0' == 6 && field[5] == 'a') {
+          field[5] = id[k] == 1 ? 'X' : 'O';
+        } else if (buf[k][numbytes[k] - 1] - '0' == 7 && field[6] == 'a') {
+          field[6] = id[k] == 1 ? 'X' : 'O';
+        } else if (buf[k][numbytes[k] - 1] - '0' == 8 && field[7] == 'a') {
+          field[7] = id[k] == 1 ? 'X' : 'O';
+        } else if (buf[k][numbytes[k] - 1] - '0' == 9 && field[8] == 'a') {
+          field[8] = id[k] == 1 ? 'X' : 'O';
+        }
          // perror("send");
-      } // for 
+      } // for
       //} while (1);
 
       close(new_fd[0]);
