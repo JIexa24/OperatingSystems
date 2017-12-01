@@ -158,23 +158,23 @@ int main(int argc, char** argv)
           if (send(new_fd[k^1], ydis, strlen(ydis), 0) == -1)
             perror("send");
             break;
-        } else if (buf[k][numbytes[k] - 1] - '0' == 1 && field[0] == 'a') {
+        } else if (buf[k][numbytes[k] - 2] - '0' == 0 && field[0] == 'a') {
           field[0] = id[k] == 1 ? 'X' : 'O';
-        } else if (buf[k][numbytes[k] - 1] - '0' == 2 && field[1] == 'a') {
+        } else if (buf[k][numbytes[k] - 2] - '0' == 1 && field[1] == 'a') {
           field[1] = id[k] == 1 ? 'X' : 'O';
-        } else if (buf[k][numbytes[k] - 1] - '0' == 3 && field[2] == 'a') {
+        } else if (buf[k][numbytes[k] - 2] - '0' == 2 && field[2] == 'a') {
           field[2] = id[k] == 1 ? 'X' : 'O';
-        } else if (buf[k][numbytes[k] - 1] - '0' == 4 && field[3] == 'a') {
+        } else if (buf[k][numbytes[k] - 2] - '0' == 3 && field[3] == 'a') {
           field[3] = id[k] == 1 ? 'X' : 'O';
-        } else if (buf[k][numbytes[k] - 1] - '0' == 5 && field[4] == 'a') {
+        } else if (buf[k][numbytes[k] - 2] - '0' == 4 && field[4] == 'a') {
           field[4] = id[k] == 1 ? 'X' : 'O';
-        } else if (buf[k][numbytes[k] - 1] - '0' == 6 && field[5] == 'a') {
+        } else if (buf[k][numbytes[k] - 2] - '0' == 5 && field[5] == 'a') {
           field[5] = id[k] == 1 ? 'X' : 'O';
-        } else if (buf[k][numbytes[k] - 1] - '0' == 7 && field[6] == 'a') {
+        } else if (buf[k][numbytes[k] - 2] - '0' == 6 && field[6] == 'a') {
           field[6] = id[k] == 1 ? 'X' : 'O';
-        } else if (buf[k][numbytes[k] - 1] - '0' == 8 && field[7] == 'a') {
+        } else if (buf[k][numbytes[k] - 2] - '0' == 7 && field[7] == 'a') {
           field[7] = id[k] == 1 ? 'X' : 'O';
-        } else if (buf[k][numbytes[k] - 1] - '0' == 9 && field[8] == 'a') {
+        } else if (buf[k][numbytes[k] - 2] - '0' == 8 && field[8] == 'a') {
           field[8] = id[k] == 1 ? 'X' : 'O';
         }
          // perror("send");

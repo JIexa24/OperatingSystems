@@ -4,7 +4,8 @@
 #include "./write.h"
 #include "./term.h"
 #include "./bc.h"
+#include "./readkey.h"
 
-void printField(char* field, int XY);
+void printField(char* field, int XY, int position);
 
 #endif

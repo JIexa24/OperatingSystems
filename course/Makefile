@@ -1,10 +1,10 @@
 CC = gcc
 CFLAGS = -g3 -O0 -pthread
 
-all: WRITE BC TERM SCREEN CLIENT SERVER
+all: WRITE BC TERM SCREEN READ CLIENT SERVER
 
-CLIENT : ./obj/client.o ./obj/bc.o ./obj/term.o ./obj/write.o ./obj/screen.o
-	$(CC) ./obj/client.o ./obj/bc.o ./obj/term.o ./obj/write.o ./obj/screen.o -o ./bin/client $(CFLAGS)
+CLIENT : ./obj/client.o ./obj/bc.o ./obj/term.o ./obj/write.o ./obj/screen.o ./obj/readkey.o
+	$(CC) ./obj/client.o ./obj/bc.o ./obj/term.o ./obj/write.o ./obj/screen.o ./obj/readkey.o -o ./bin/client $(CFLAGS)
 
 ./obj/client.o: ./src/client.c
 	$(CC) -c ./src/client.c -o ./obj/client.o
@@ -19,6 +19,11 @@ BC: ./obj/bc.o
 
 ./obj/bc.o: ./src/bc.c
 	$(CC) -c ./src/bc.c -o ./obj/bc.o
+
+READ: ./obj/readkey.o
+
+./obj/readkey.o: ./src/readkey.c
+		$(CC) -c ./src/readkey.c -o ./obj/readkey.o
 
 TERM: ./obj/term.o
 
