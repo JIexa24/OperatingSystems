@@ -124,16 +124,31 @@ int main(int argc, char** argv)
       exit(EXIT_FAILURE);
     }
     buf[numbytes] = 0;
-    printf("\n\nLocalhost: %s\n", inet_ntoa(*(struct in_addr *)hostIP->h_addr));
-    printf("Local Port: %d\n", port);
-    printf("Remote Host: %s\n", inet_ntoa(their_addr.sin_addr));
-    printf("Received data: %s\n",buf);
+    //printf("\n\nLocalhost: %s\n", inet_ntoa(*(struct in_addr *)hostIP->h_addr));
+    //printf("Local Port: %d\n", port);
+    //printf("Remote Host: %s\n", inet_ntoa(their_addr.sin_addr));
+    //printf("Received data: %s\n",buf);
     if (strcmp(buf,"Disconnected") == 0 || strcmp(buf,"Your Enemy Disconnected. Fail") == 0) {
       mt_clrscr();
       printf("Received data: %s\n",buf);
       mt_gotoXY(1,2);
       rk_mytermrestore();
       break;
+    } else if (strcmp(buf,"Draw") == 0) {
+    mt_gotoXY(1,30);
+    printf("Received data: %s\n",buf);
+    rk_mytermrestore();
+    break;
+    } else if (strcmp(buf,"You lose.") == 0) {
+    mt_gotoXY(1,30);
+    printf("Received data: %s\n",buf);
+    rk_mytermrestore();
+    break;
+    } else if (strcmp(buf,"You win.") == 0) {
+    mt_gotoXY(1,30);
+    printf("Received data: %s\n",buf);
+    rk_mytermrestore();
+    break;
     } else {
       for (e = 8,b = numbytes - 1; e >= 0; e--, b--) {
         field[e] = buf[b];
