@@ -7,5 +7,6 @@
 #include "./readkey.h"
 
 void printField(char* field, int XY, int position);
+void printBox();
 
 #endif

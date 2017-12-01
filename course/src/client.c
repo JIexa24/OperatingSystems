@@ -20,6 +20,7 @@ void ursignalHand(int sig)
 {
   if (send(sockfd, "disconnect", 10, 0) == -1)
     perror("send");
+  mt_clrscr();
   mt_gotoXY(1,1);
   printf("Disconnect\n");
   rk_mytermrestore();
@@ -56,6 +57,7 @@ int main(int argc, char** argv)
   struct hostent *hostIP; // Айпишка хоста
   rk_mytermsave();
   setSignals();
+  mt_clrscr();
   // Попытка получить по имени хоста его айпишник
   if((gethostname(hostn, sizeof(hostn))) == 0) {
     hostIP = gethostbyname(hostn);
