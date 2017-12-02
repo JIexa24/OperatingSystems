@@ -90,7 +90,7 @@ int main(int argc, char** argv)
   printf("port %d\n", port);
   printf("games %d\n", games);
   flag = games;
-  if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
+  if ((sockfd = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP)) == -1) {
    perror("socket");
    exit(1);
   }
@@ -100,9 +100,9 @@ int main(int argc, char** argv)
     exit(1);
   }
 
-  my_addr.sin_family = AF_INET;
+  my_addr.sin_family = PF_INET;
   my_addr.sin_port = htons(port);
-  my_addr.sin_addr.s_addr = INADDR_ANY;
+  my_addr.sin_addr.s_addr = htonl(INADDR_ANY);
   memset(&(my_addr.sin_zero), 0, 8);
 
   if (bind(sockfd, (struct sockaddr *)&my_addr, sizeof(struct sockaddr)) == -1) {

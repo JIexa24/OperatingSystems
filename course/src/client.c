@@ -85,13 +85,13 @@ int main(int argc, char** argv)
     exit(EXIT_FAILURE);
   }
 
-  if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
+  if ((sockfd = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP)) == -1) {
     perror("socket");
     exit(1);
   }
 
   //Ставим инуфу о серваке
-  their_addr.sin_family = AF_INET;
+  their_addr.sin_family = PF_INET;
   their_addr.sin_port = htons(port);
   their_addr.sin_addr = *((struct in_addr *)he->h_addr);
   memset(&(their_addr.sin_zero), 0, 8);
