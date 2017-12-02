@@ -14,7 +14,7 @@
 #include "../include/screen.h"
 #define MYPORT 1025
 #define MAXDATASIZE 500 // Буфер приема
-#define BACKLOG 10 //максимальная длина очереди
+#define BACKLOG games * 2 //максимальная длина очереди
 #define GAMERS 2
 #define WINCOORD 8
 static char msghel[GAMERS][100] = {"You is a first gamer.\n","You is a second gamer.\n"};
