@@ -9,17 +9,22 @@
 #include <arpa/inet.h>
 #include <time.h>
 #include <pthread.h>
-
 #include <sys/wait.h>
 #include <signal.h>
+#include "../include/screen.h"
 #define MYPORT 1025
 #define MAXDATASIZE 500 // Буфер приема
 #define BACKLOG 10 //максимальная длина очереди
+#define GAMERS 2
+#define WINCOORD 8
+static char msghel[GAMERS][100] = {"You is a first gamer.\n","You is a second gamer.\n"};
+static char win[3][100] = {"You win.","You lose.", "Draw"};
+static char dis[100] = "Disconnected";
+static char ydis[100] = "Your Enemy Disconnected. Fail";
 
-char msghel[2][100] = {"You is a first gamer.\n","You is a second gamer.\n"};
-char dis[] = "Disconnected";
-char ydis[] = "Your Enemy Disconnected. Fail";
-int flag = 1;
+static const int wincoords[WINCOORD][3] = {{0,1,2},{3,4,5},{6,7,8},{0,3,6},{1,4,7},{2,5,8},{0,4,8},{2,4,6}};
+
+static int flag = 1;
 pthread_mutex_t mut = PTHREAD_MUTEX_INITIALIZER;
 void sigchld_handler(int s)
 {
@@ -28,10 +33,35 @@ void sigchld_handler(int s)
   pthread_mutex_unlock(&mut);
   while(wait(NULL) > 0);
 }
+
+void checkFinal(char* field, int* winner)
+{
+  int i;
+  int flagFieldIsFull = 1;
+  *winner = -2;
+  for (i = 0; i < WINCOORD; i++) {
+    if (field[wincoords[i][0]] == field[wincoords[i][1]]){
+      if (field[wincoords[i][1]] == field[wincoords[i][2]]){
+        if (field[wincoords[i][0]] == 'X') *winner = 1;
+        else if (field[wincoords[i][0]] == 'O') *winner = 0;
+      }
+    }
+  }
+  for (i = 0 ; i < 9; i++) {
+    if (field[i] == 'a') {
+      flagFieldIsFull = 0;
+    }
+  }
+  if (flagFieldIsFull == 1 && *winner == -2) {
+    *winner = -1; /*Draw*/
+  }
+}
+
 int main(int argc, char** argv)
 {
   int port = 7777; // прослушиваемый порт
   int games = 1;
+  int winner = -2;
   int opt;
   time_t timer;
   int sockfd, new_fd[2], numbytes[2]; /* sock_fd - то, что слушаем
@@ -43,6 +73,7 @@ int main(int argc, char** argv)
   int yes=1;
   char buf[2][MAXDATASIZE];
   int k = 0,j = 0;
+  int idX,idO;
 
   opterr = 0;
 
@@ -54,7 +85,6 @@ int main(int argc, char** argv)
       case 'g':
         games = atoi(optarg);
       break;
-
     }
   }
   printf("port %d\n", port);
@@ -94,7 +124,7 @@ int main(int argc, char** argv)
 
   int count = 0;
   while(flag > 0) {
-    for (k = 0,j = 0; j < 2 && games > 0; k^=1,j++) {
+    for (k = 0,j = 0; j < GAMERS && games > 0; k^=1,j++) {
       sin_size[k] = sizeof(struct sockaddr_in);
       if ((new_fd[k] = accept(sockfd, (struct sockaddr *)&their_addr[k],&sin_size[k])) == -1) {
         //perror("accept");
@@ -105,10 +135,10 @@ int main(int argc, char** argv)
              count,inet_ntoa(their_addr[k].sin_addr),port);
       if ((send(new_fd[k], msghel[k], strlen(msghel[k]), 0)) == -1)
         perror("send");
-
     }
     if (games-- > 0)
     if (!fork()) { // child process
+      usleep(1000000);
       close(sockfd); // child doesn.t need the listener
       char field[10] = "aaaaaaaaa";
       char tmp[100] = "You going ";
@@ -120,16 +150,16 @@ int main(int argc, char** argv)
       else id[1] = 0;            // 0 - x; 1 - o
       k = 0,j = 0;
       //do {
-      for (k = 0,j = 0; j < 2; k^=1,j++) {
+      for (k = 0,j = 0; j < GAMERS; k^=1,j++) {
         strcat(msghel[k], "Your Enemy has IP: ");
         strcat(msghel[k], inet_ntoa(their_addr[k].sin_addr));
-        strcat(msghel[k], "\nTo game: 5 sec.");
+        strcat(msghel[k], "\nTo game: 1 sec.");
         strcat(msghel[k], "\nYour Symb: ");
         strcat(msghel[k], id[k] == 1 ? "X" : "O");
         if ((send(new_fd[k], msghel[k], strlen(msghel[k]), 0)) == -1)
           perror("send");
       }
-      sleep(5);
+      sleep(1);
       //for (k = 0,j = 0; j < 2; k^=1,j++) {
       //  if ((numbytes[k]=send(new_fd[k], "I'm alive! Connect!\n", 20, 0)) == -1) {
       //    perror("send");
@@ -138,7 +168,9 @@ int main(int argc, char** argv)
       int e = 0;
       strcat(tmp, field);
       k = id[0] == 1 ? 0 : 1;
-      for (k; k < 2; k^=1) {
+      idX = k;
+      idO = k^1;
+      for (k;; k^=1) {
         for (e = 10; e < 19; e++){
           tmp[e] = field[e - 10];
         }
@@ -159,24 +191,59 @@ int main(int argc, char** argv)
           if (send(new_fd[k^1], ydis, strlen(ydis), 0) == -1)
             perror("send");
             break;
-        } else if (buf[k][numbytes[k] - 1] - '0' == 1 && field[0] == 'a') {
+        } else if (buf[k][numbytes[k] - 2] - '0' == 0 && field[0] == 'a') {
           field[0] = id[k] == 1 ? 'X' : 'O';
-        } else if (buf[k][numbytes[k] - 1] - '0' == 2 && field[1] == 'a') {
+        } else if (buf[k][numbytes[k] - 2] - '0' == 1 && field[1] == 'a') {
           field[1] = id[k] == 1 ? 'X' : 'O';
-        } else if (buf[k][numbytes[k] - 1] - '0' == 3 && field[2] == 'a') {
+        } else if (buf[k][numbytes[k] - 2] - '0' == 2 && field[2] == 'a') {
           field[2] = id[k] == 1 ? 'X' : 'O';
-        } else if (buf[k][numbytes[k] - 1] - '0' == 4 && field[3] == 'a') {
+        } else if (buf[k][numbytes[k] - 2] - '0' == 3 && field[3] == 'a') {
           field[3] = id[k] == 1 ? 'X' : 'O';
-        } else if (buf[k][numbytes[k] - 1] - '0' == 5 && field[4] == 'a') {
+        } else if (buf[k][numbytes[k] - 2] - '0' == 4 && field[4] == 'a') {
           field[4] = id[k] == 1 ? 'X' : 'O';
-        } else if (buf[k][numbytes[k] - 1] - '0' == 6 && field[5] == 'a') {
+        } else if (buf[k][numbytes[k] - 2] - '0' == 5 && field[5] == 'a') {
           field[5] = id[k] == 1 ? 'X' : 'O';
-        } else if (buf[k][numbytes[k] - 1] - '0' == 7 && field[6] == 'a') {
+        } else if (buf[k][numbytes[k] - 2] - '0' == 6 && field[6] == 'a') {
           field[6] = id[k] == 1 ? 'X' : 'O';
-        } else if (buf[k][numbytes[k] - 1] - '0' == 8 && field[7] == 'a') {
+        } else if (buf[k][numbytes[k] - 2] - '0' == 7 && field[7] == 'a') {
           field[7] = id[k] == 1 ? 'X' : 'O';
-        } else if (buf[k][numbytes[k] - 1] - '0' == 9 && field[8] == 'a') {
+        } else if (buf[k][numbytes[k] - 2] - '0' == 8 && field[8] == 'a') {
           field[8] = id[k] == 1 ? 'X' : 'O';
+        }
+        checkFinal(field, &winner);
+        if (winner == 0) {
+          if (send(new_fd[idO], win[0], strlen(win[0]), 0) == -1)
+            perror("send");
+          if (send(new_fd[idX], win[1], strlen(win[1]), 0) == -1)
+            perror("send");
+          usleep(100000);
+          if (send(new_fd[idO], field, 9, 0) == -1)
+            perror("send");
+          if (send(new_fd[idX], field, 9, 0) == -1)
+            perror("send");
+          break;
+        } else if (winner == 1) {
+          if (send(new_fd[idX], win[0], strlen(win[0]), 0) == -1)
+            perror("send");
+          if (send(new_fd[idO], win[1], strlen(win[1]), 0) == -1)
+            perror("send");
+          usleep(100000);
+          if (send(new_fd[idO], field, 9, 0) == -1)
+            perror("send");
+          if (send(new_fd[idX], field, 9, 0) == -1)
+            perror("send");
+          break;
+        } else if (winner == -1) {
+          if (send(new_fd[idO], win[2], strlen(win[2]), 0) == -1)
+            perror("send");
+          if (send(new_fd[idX], win[2], strlen(win[2]), 0) == -1)
+            perror("send");
+          usleep(100000);
+          if (send(new_fd[idO], field, 9, 0) == -1)
+            perror("send");
+          if (send(new_fd[idX], field, 9, 0) == -1)
+            perror("send");
+          break;
         }
          // perror("send");
       } // for

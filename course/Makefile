@@ -1,10 +1,10 @@
 CC = gcc
 CFLAGS = -g3 -O0 -pthread
 
-all: WRITE BC TERM CLIENT SERVER
+all: WRITE BC TERM SCREEN READ CLIENT SERVER
 
-CLIENT : ./obj/client.o ./obj/bc.o ./obj/term.o ./obj/write.o
-	$(CC) ./obj/client.o ./obj/bc.o ./obj/term.o ./obj/write.o -o ./bin/client $(CFLAGS)
+CLIENT : ./obj/client.o ./obj/bc.o ./obj/term.o ./obj/write.o ./obj/screen.o ./obj/readkey.o
+	$(CC) ./obj/client.o ./obj/bc.o ./obj/term.o ./obj/write.o ./obj/screen.o ./obj/readkey.o -o ./bin/client $(CFLAGS)
 
 ./obj/client.o: ./src/client.c
 	$(CC) -c ./src/client.c -o ./obj/client.o
@@ -20,6 +20,11 @@ BC: ./obj/bc.o
 ./obj/bc.o: ./src/bc.c
 	$(CC) -c ./src/bc.c -o ./obj/bc.o
 
+READ: ./obj/readkey.o
+
+./obj/readkey.o: ./src/readkey.c
+		$(CC) -c ./src/readkey.c -o ./obj/readkey.o
+
 TERM: ./obj/term.o
 
 ./obj/term.o: ./src/term.c
@@ -30,6 +35,10 @@ WRITE: ./obj/write.o
 ./obj/write.o: ./src/write.c
 	$(CC) -c ./src/write.c -o ./obj/write.o
 
+SCREEN: ./obj/screen.o
+
+./obj/screen.o: ./src/screen.c
+		$(CC) -c ./src/screen.c -o ./obj/screen.o
 
 clean:
 	rm ./obj/*.o
