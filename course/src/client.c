@@ -135,16 +135,37 @@ int main(int argc, char** argv)
       rk_mytermrestore();
       break;
     } else if (strcmp(buf,"Draw") == 0) {
+    numbytes = 0;
+    if ((numbytes=recv(sockfd, field, MAXDATASIZE-1, 0)) == -1) {
+      perror("recv");
+      exit(EXIT_FAILURE);
+    }
+    field[9] = 0;
+    printField(field, XY, position);
     mt_gotoXY(1,30);
     printf("Received data: %s\n",buf);
     rk_mytermrestore();
     break;
     } else if (strcmp(buf,"You lose.") == 0) {
+    numbytes = 0;
+    if ((numbytes=recv(sockfd, field, MAXDATASIZE-1, 0)) == -1) {
+      perror("recv");
+      exit(EXIT_FAILURE);
+    }
+    field[9] = 0;
+    printField(field, XY, position);
     mt_gotoXY(1,30);
     printf("Received data: %s\n",buf);
     rk_mytermrestore();
     break;
     } else if (strcmp(buf,"You win.") == 0) {
+    numbytes = 0;
+    if ((numbytes=recv(sockfd, field, MAXDATASIZE-1, 0)) == -1) {
+      perror("recv");
+      exit(EXIT_FAILURE);
+    }
+    field[9] = 0;
+    printField(field, XY, position);
     mt_gotoXY(1,30);
     printf("Received data: %s\n",buf);
     rk_mytermrestore();

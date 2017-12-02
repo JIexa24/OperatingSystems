@@ -22,7 +22,7 @@ static char win[3][100] = {"You win.","You lose.", "Draw"};
 static char dis[100] = "Disconnected";
 static char ydis[100] = "Your Enemy Disconnected. Fail";
 
-static int wincoords[WINCOORD][3] = {{0,1,2},{3,4,5},{6,7,8},{0,3,6},{1,4,7},{2,5,8},{0,4,8},{2,4,6}};
+static const int wincoords[WINCOORD][3] = {{0,1,2},{3,4,5},{6,7,8},{0,3,6},{1,4,7},{2,5,8},{0,4,8},{2,4,6}};
 
 static int flag = 1;
 pthread_mutex_t mut = PTHREAD_MUTEX_INITIALIZER;
@@ -53,7 +53,7 @@ void checkFinal(char* field, int* winner)
     }
   }
   if (flagFieldIsFull == 1 && *winner == -2) {
-    *winner == -1; /*Draw*/
+    *winner = -1; /*Draw*/
   }
 }
 
@@ -216,17 +216,32 @@ int main(int argc, char** argv)
             perror("send");
           if (send(new_fd[idX], win[1], strlen(win[1]), 0) == -1)
             perror("send");
+          usleep(100000);
+          if (send(new_fd[idO], field, 9, 0) == -1)
+            perror("send");
+          if (send(new_fd[idX], field, 9, 0) == -1)
+            perror("send");
           break;
         } else if (winner == 1) {
           if (send(new_fd[idX], win[0], strlen(win[0]), 0) == -1)
             perror("send");
           if (send(new_fd[idO], win[1], strlen(win[1]), 0) == -1)
             perror("send");
+          usleep(100000);
+          if (send(new_fd[idO], field, 9, 0) == -1)
+            perror("send");
+          if (send(new_fd[idX], field, 9, 0) == -1)
+            perror("send");
           break;
         } else if (winner == -1) {
           if (send(new_fd[idO], win[2], strlen(win[2]), 0) == -1)
             perror("send");
           if (send(new_fd[idX], win[2], strlen(win[2]), 0) == -1)
+            perror("send");
+          usleep(100000);
+          if (send(new_fd[idO], field, 9, 0) == -1)
+            perror("send");
+          if (send(new_fd[idX], field, 9, 0) == -1)
             perror("send");
           break;
         }
