@@ -14,7 +14,7 @@
 #include "../include/screen.h"
 #define MYPORT 1025
 #define MAXDATASIZE 500 // Буфер приема
-#define BACKLOG 10 //максимальная длина очереди
+#define BACKLOG games * 2 //максимальная длина очереди
 #define GAMERS 2
 #define WINCOORD 8
 static char msghel[GAMERS][100] = {"You is a first gamer.\n","You is a second gamer.\n"};
@@ -90,7 +90,7 @@ int main(int argc, char** argv)
   printf("port %d\n", port);
   printf("games %d\n", games);
   flag = games;
-  if ((sockfd = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
+  if ((sockfd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) == -1) {
    perror("socket");
    exit(1);
   }
@@ -102,7 +102,7 @@ int main(int argc, char** argv)
 
   my_addr.sin_family = AF_INET;
   my_addr.sin_port = htons(port);
-  my_addr.sin_addr.s_addr = INADDR_ANY;
+  my_addr.sin_addr.s_addr = htonl(INADDR_ANY);
   memset(&(my_addr.sin_zero), 0, 8);
 
   if (bind(sockfd, (struct sockaddr *)&my_addr, sizeof(struct sockaddr)) == -1) {
