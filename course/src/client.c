@@ -47,7 +47,7 @@ int main(int argc, char** argv)
   char buf[MAXDATASIZE];
   struct hostent *he;
   struct sockaddr_in their_addr; // Адрес сервака
-  char hostn[400] = "127.0.0.1"; // Имя хоста текущее
+  char hostn[400] = "localhost"; // Имя хоста текущее
   int port = 7777; /* Порт. Л - Логика.*/
   int opt, XY, k = 0;
   int cursorY = 0, cursorX = 0, position = 0;
