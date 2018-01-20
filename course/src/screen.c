@@ -32,7 +32,7 @@ void printField(char* field, int XY, int position)
   int i;
   enum colors fgcolor = clr_red;
   enum colors bgcolor = clr_default;
-  mt_clrscr();
+//  mt_clrscr();
   mt_gotoXY(0,0);
   printf("I have %s\n", XY == 1 ? "X" : "O");
   printBox();
