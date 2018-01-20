@@ -1,6 +1,7 @@
 #include <arpa/inet.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <poll.h>
 #include <unistd.h>
 #include <errno.h>
 #include <string.h>
@@ -116,14 +117,22 @@ int main(int argc, char** argv)
     }
   }
   printf("I have %s\n", XY == 1 ? "X" : "O");
-
+  struct pollfd msgin;
+  msgin.fd = sockfd;
+  msgin.events = 0 | POLLIN;
+  msgin.revents = 0;
+  int flagin = 0;
   for (k = XY; k < 2; k ^= 1) {
     numbytes = 0;
-    if ((numbytes=recv(sockfd, buf, MAXDATASIZE-1, 0)) == -1) {
-      perror("recv");
-      exit(EXIT_FAILURE);
-    }
+      poll(&msgin,1,0);
+      if ((msgin.revents & (POLLIN) == POLLIN))
+      if (((numbytes=recv(sockfd, buf, MAXDATASIZE-1, 0)) == -1)) {
+        perror("recv");
+        exit(EXIT_FAILURE);
+      } else {
+      }
     buf[numbytes] = 0;
+    msgin.revents = 0;
     //printf("\n\nLocalhost: %s\n", inet_ntoa(*(struct in_addr *)hostIP->h_addr));
     //printf("Local Port: %d\n", port);
     //printf("Remote Host: %s\n", inet_ntoa(their_addr.sin_addr));
@@ -194,6 +203,13 @@ int main(int argc, char** argv)
             refresh = 0;
           }
 
+          poll(&msgin,1,0);
+          if ((msgin.revents & (POLLIN) == POLLIN)) {
+            flagin = 1;
+            break;
+          } else {
+          }
+
           rk_readkey(&key);
           switch (key) {
             case KEY_left:
@@ -230,8 +246,16 @@ int main(int argc, char** argv)
               }
             refresh = 0;
             break;
+            case KEY_other:
+              refresh = 0;
+            break;
             default: refresh = 0; break;
           }
+        }
+        if (flagin == 1) {
+          flagin = 0;
+          k ^= 1;
+          continue;
         }
         rk_mytermrestore();
         i = 2;
